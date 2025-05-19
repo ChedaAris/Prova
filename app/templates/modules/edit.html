@@ -1,0 +1,258 @@
+{% extends "layout.html" %}
+
+{% block title %}Light Manager{% endblock %}
+
+{% block head %}
+<style>
+    /* Custom styles for toggle switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+    }
+    
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background-color: #3b82f6;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+    
+    /* Disabled color inputs */
+    .color-picker-container.disabled input[type="color"] {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="mb-4 p-4 border-l-4 {% if category == 'danger' %}bg-red-100 border-red-500 text-red-700{% else %}bg-blue-100 border-blue-500 text-blue-700{% endif %}" role="alert">
+            <p>{{ message }}</p>
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="bg-white rounded-lg shadow-md mb-4 overflow-hidden">
+        <div class="flex justify-between items-center p-4 border-b">
+            <a href="{{ url_for('modules_bp.index') }}" class="p-2 rounded-full hover:bg-gray-100">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="text-xl font-bold">
+                {% if module.number %}
+                    {{ module.number }}
+                {% else %}
+                    <i class="fas fa-arrow-right"></i>
+                {% endif %}
+            </div>
+            <a >
+            </a> 
+        </div>
+
+        <form action="{{ url_for('modules_bp.update', id=module.id) }}" method="post">
+            <!-- CSRF protection -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="p-6 space-y-6">
+                <div class="space-y-4">
+                    <!-- Power toggle -->
+                    <div class="flex justify-between items-center">
+                        <label for="is_power_off" class="text-lg power-label">{{ 'Turn Off' if module.on else 'Turn On' }}</label>
+                        <label class="switch">
+                            <input type="checkbox" id="is_power_off" name="is_power_off" {% if module.on %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Color picker only -->
+                    <div class="flex justify-between items-start">
+                        <label class="text-lg mt-2">Color:</label>
+                        <div id="colorPickerContainer" class="flex flex-col items-end space-y-3 w-full md:w-48 color-picker-container {% if module.color == 'random' %}disabled{% endif %}">
+                            <input 
+                                type="color" 
+                                id="color_picker" 
+                                value="{{ '#ffffff' if module.color == 'random' else module.color }}" 
+                                class="w-50 h-10 border rounded cursor-pointer"
+                                oninput="document.getElementById('color').value = this.value;"
+                            >
+                            <input type="hidden" id="color" name="color" value="{{ '#ffffff' if module.color == 'random' else module.color }}">
+                        </div>
+                    </div>
+
+                    <!-- Random color toggle -->
+                    <div class="flex justify-end">
+                        <div class="flex items-center space-x-3">
+                            <label for="is_color_random" class="text-lg">Random</label>
+                            <label class="switch">
+                                <input type="checkbox" id="is_color_random" name="is_color_random" {% if module.color == 'random' %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Animation selector -->
+                    <div class="flex justify-between items-center mt-4">
+                        <label for="animation" class="text-lg">Animation:</label>
+                        <select 
+                            id="animation" 
+                            name="animation" 
+                            class="border rounded px-3 py-1 w-full md:w-48"
+                        >
+                            <option value="none" {% if module.animation == "none" %}selected{% endif %}>None</option>
+                            <option value="random" {% if module.animation == "random" %}selected{% endif %}>Random</option>
+                            <option value="flow" {% if module.animation == "flow" %}selected{% endif %}>Flow</option>
+                            {% if module.type == 'numeric' %}
+                                <option value="pixels" {% if module.animation == "pixels" %}selected{% endif %}>Random Pixels</option>
+                            {% elif module.type == 'arrow' %}
+                                <option value="pulse" {% if module.animation == "pulse" %}selected{% endif %}>Pulse</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-4 space-y-4">
+                    {% if module.type == 'numeric' %}
+                    <!-- Number field (only for numeric modules) -->
+                    <div class="flex justify-between items-center">
+                        <label for="number" class="text-lg">Number:</label>
+                        <input
+                            type="text"
+                            id="number"
+                            name="number"
+                            value="{{ module.number }}"
+                            class="border rounded px-3 py-1 w-full md:w-48"
+                        >
+                    </div>
+                    {% endif %}
+
+                    <!-- Module place field -->
+                    <div class="flex justify-between items-center">
+                        <label for="place" class="text-lg">Location:</label>
+                        <input
+                            type="text"
+                            id="place"
+                            name="place"
+                            value="{{ module.place }}"
+                            class="border rounded px-3 py-1 w-full md:w-48"
+                        >
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 justify-center p-6">
+                <button type="button" onclick="confirmDelete(`{{ url_for('modules_bp.delete', id=module.id) }}`)" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <a href="{{ url_for('modules_bp.index') }}" class="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 w-32 text-center">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md w-32">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorInput = document.getElementById('color');
+        const colorPicker = document.getElementById('color_picker');
+        const colorContainer = document.getElementById('colorPickerContainer');
+        const randomToggle = document.getElementById('is_color_random');
+        const powerToggle = document.getElementById('is_power_off');
+        const powerLabel = document.querySelector('.power-label');
+        
+        // Handle the random color toggle to enable/disable color picker
+        randomToggle.addEventListener('change', function() {
+            if (this.checked) {
+                // Disable the color picker
+                colorContainer.classList.add('disabled');
+            } else {
+                // Enable the color picker
+                colorContainer.classList.remove('disabled');
+            }
+        });
+        
+        // Update power label based on toggle state
+        powerToggle.addEventListener('change', function() {
+            if (this.checked) {
+                powerLabel.textContent = 'Turn Off';
+            } else {
+                powerLabel.textContent = 'Turn On';
+            }
+        });
+    });
+
+    function confirmDelete(deleteUrl) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won\'t be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Create a form dynamically to send a POST request
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = deleteUrl;
+                
+                // Add CSRF token if it exists in the main form
+                const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
+                if (csrfTokenInput) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrf_token';
+                    csrfInput.value = csrfTokenInput.value;
+                    form.appendChild(csrfInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        })
+    }
+</script>
+{% endblock %}

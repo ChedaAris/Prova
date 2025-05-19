@@ -1,0 +1,129 @@
+{% extends "layout.html" %}
+
+{% block title %}System Logs{% endblock %}
+
+{% block content %}
+<div class="flex items-center mb-6">
+    <a href="{{ url_for('modules_bp.index') }}" class="p-2 rounded-full hover:bg-gray-100">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <h1 class="text-2xl font-bold text-gray-900">
+        System Logs
+    </h1>
+</div>
+
+<!-- Tabs -->
+<div class="border-b border-gray-200">
+    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        {% for tab_name in available_tabs %} {# Changed to use available_tabs #}
+        <a href="?tab={{ tab_name }}" class="flex items-center py-4 px-1 border-b-2 font-medium text-sm 
+                {% if active_tab == tab_name %}
+                    border-indigo-500 text-indigo-600
+                {% else %}
+                    border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300
+                {% endif %}
+            ">
+            <span class="mr-2">
+                {% if tab_name == 'app' %}
+                <i class="fas fa-list"></i> {# Replaced layout-list #}
+                {% elif tab_name == 'auth' %}
+                <i class="fas fa-shield-alt"></i> {# Replaced shield #}
+                {% elif tab_name == 'api' %} {# Changed from 'modules' to 'api' to match backend keys #}
+                <i class="fas fa-server"></i> {# Replaced server #}
+                {% elif tab_name == 'microcontrollers' %}
+                <i class="fas fa-microchip"></i> {# Replaced cpu #}
+                {% else %}
+                <i class="fas fa-file-alt"></i> {# Replaced file-text (default icon) #}
+                {% endif %}
+            </span>
+            <span class="capitalize">{{ tab_name.replace('_', ' ') }}</span>
+        </a>
+        {% endfor %}
+    </nav>
+</div>
+
+<!-- Log entries -->
+<div class="mt-6">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Severity
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Details
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Source
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Timestamp
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for log in logs[active_tab] %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            {% if log.severity == 'error' %}
+                            <i class="fas fa-times-circle text-red-500"></i> {# Replaced alert-circle #}
+                            <span
+                                class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-red-100 text-red-800 border-red-200">
+                                {{ log.severity }}
+                            </span>
+                            {% elif log.severity == 'warning' %}
+                            <i class="fas fa-exclamation-triangle text-yellow-500"></i> {# Replaced alert-triangle #}
+                            <span
+                                class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-yellow-100 text-yellow-800 border-yellow-200">
+                                {{ log.severity }}
+                            </span>
+                            {% elif log.severity == 'info' %}
+                            <i class="fas fa-info-circle text-blue-500"></i> {# Replaced info #}
+                            <span
+                                class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-blue-100 text-blue-800 border-blue-200">
+                                {{ log.severity }}
+                            </span>
+                            {% elif log.severity == 'debug' %}
+                            <i class="fas fa-bug text-gray-500"></i> {# Replaced bug #}
+                            <span
+                                class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-gray-100 text-gray-800 border-gray-200">
+                                {{ log.severity }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">{{ log.title }}</div>
+                        <div class="text-sm text-gray-500">{{ log.description }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-file-alt w-4 h-4 mr-1.5"></i> {# Replaced file-text #}
+                            {{ log.file }}:{{ log.line }} {# Added line number display #}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-clock w-4 h-4 mr-1.5"></i> {# Replaced clock #}
+                            {{ log.timestamp | format_timestamp }}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if logs[active_tab]|length == 0 %}
+    <div class="text-center py-12">
+        <p class="text-gray-500">No logs found for this category.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
