@@ -12,6 +12,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install -r requirements.txt
 
 ENV FLASK_APP=app.py
+ENV DATABASE_URL="sqlite:///app.db"
 
 RUN flask db init
 RUN flask db migrate -m "first_migration"
