@@ -14,4 +14,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 ENV FLASK_APP=app.py
 ENV DATABASE_URL=sqlite:///app.db
 
-CMD ["gunicorn","-b 0.0.0.0:5000","app:create_app()"]
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
