@@ -14,8 +14,4 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 ENV FLASK_APP=app.py
 ENV DATABASE_URL=sqlite:///app.db
 
-RUN flask db init
-RUN flask db migrate -m "first_migration"
-RUN flask db upgrade
-
 CMD ["gunicorn","-b 0.0.0.0","app:create_app()"]

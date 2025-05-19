@@ -2,6 +2,8 @@ services:
 
   backend:
     build: .
+    command: >
+      sh -c "flask db init && flask db migrate && flask db upgrade && flask run --host=0.0.0.0"
     restart: always
     ports:
       - 8000:8000
